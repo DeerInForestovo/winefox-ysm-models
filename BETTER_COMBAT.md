@@ -16,6 +16,7 @@ python3 tools/build_combat.py
 python3 tools/build_combat.py --check
 npm ci --ignore-scripts
 npm test
+python3 tools/test_ysm.py --ysm-jar <YSM-2.6.5.jar> --libraries <NeoForge-libraries>
 ```
 
 修改关键帧后重新生成模型内 `better_combat.animation.json`，并保留模型内 `functions/`、`controller/` 与 `ysm.json`。不要用编辑器关键帧文件覆盖生成的运行资源。
@@ -23,6 +24,8 @@ npm test
 ## 安装与验证边界
 
 将本仓「工程师酒狐」整个文件夹放入 YSM custom 目录；首次安装也需把根目录 LICENSE、NOTICE.md、ASSET_LICENSE_CN.md 随模型保存。停机备份现有模型，保留自己的修改后替换，不在运行中的游戏资源目录内制作模型。
+
+`test_ysm.py` 使用外部提供的官方 YSM 2.6.5 JAR 中真实解析器／求值器，检查三个动作、回退及相位推进；不启动 Minecraft，不分发 JAR。Minecraft 输入由适配器提供，主手物品查询在游戏中核实。回归能捕获该版本对无代码块条件赋值的差异，避免仅依赖独立 Molang 解释器。反射入口绑定该发行版的混淆名称，升级 YSM 时必须复核测试适配器。
 
 自动检查与原生服务端资源注册不能代替客户端战斗验收。重点检查横砍→横砍→突刺、断连后重新起手、攻速变化、换武器，以及没有 Better Combat 时的原动作。
 
