@@ -1,0 +1,6 @@
+{
+  "name": "winefox-ysm-model-checks",
+  "private": true,
+  "scripts": {"test": "node --test tools/combat.test.cjs"},
+  "devDependencies": {"molang": "2.0.1"}
+}
