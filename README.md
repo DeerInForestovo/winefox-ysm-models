@@ -85,4 +85,4 @@ Now she travels with a mechanical backpack, servo arm, wrench, goggles, and enou
 
 ## 本 fork 的 Better Combat 适配
 
-工程师酒狐可按 Better Combat 当前动作播放左右横砍与平举直线突刺。需求、编辑与验证方法见 [BETTER_COMBAT.md](BETTER_COMBAT.md)。原作者署名及素材许可继续适用。
+工程师酒狐可按 Better Combat 当前动作播放剑的左右横砍与平举直线突刺，以及普通斧的视觉双手左右横砍。需求、编辑与验证方法见 [BETTER_COMBAT.md](BETTER_COMBAT.md)。原作者署名及素材许可继续适用。

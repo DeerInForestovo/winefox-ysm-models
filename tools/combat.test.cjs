@@ -17,7 +17,7 @@ const authored = JSON.parse(fs.readFileSync(path.join(root,'authoring/better_com
 const names=['','one_handed_slash_horizontal_right','one_handed_slash_horizontal_left','one_handed_stab'];
 function fixture() {
   const s={name:'',sword:true,arm:0,swinging:true,tick:0,speed:1.6,dt:0.05,now:0};
-  const vm = new Molang({query:{life_time:()=>s.now},ctrl:{hold:()=>s.sword,bcombat_attack_animation:()=>s.name},
+  const vm = new Molang({query:{life_time:()=>s.now},ctrl:{hold:(hand,kind)=>kind===':sword'?s.sword:kind===':axe'?!!s.axe:(kind==='minecraft:diamond_axe'||kind==='minecraft:netherite_axe')?!!(s.axe&&s.modelAxe):false,bcombat_attack_animation:()=>s.name},
     ysm:{swinging_arm:()=>s.arm,swinging:()=>s.swinging,swing_time:()=>s.tick,attack_speed:()=>s.speed,time_delta:()=>s.dt},
     fn:{winefox_bc_lerp:(...args)=>new Molang().execute(lerp.replace(/args\[(\d)\]/g,(_,i)=>String(args[+i])))}});
   vm.execute('v.winefox_bc_action=0;v.winefox_bc_input=0;v.winefox_bc_phase=0;v.winefox_bc_start=0;v.winefox_bc_speed=0;v.winefox_bc_last_swing=0;');
@@ -63,7 +63,8 @@ test('shared phase follows attack speed, resets on repeated same-name swing and 
 });
 test('generated curves match four-point Catmull-Rom and linear authoring',()=>{
   const f=fixture();let samples=0;
-  for(const [name,clip] of Object.entries(clips)){
+  for(const name of Object.keys(authored)){
+    const clip=clips[name];
     for(const [bone,channels] of Object.entries(authored[name].bones))for(const [channel,frames] of Object.entries(channels)){
       if(typeof frames!=='object'||Array.isArray(frames))continue;
       const points=Object.entries(frames).map(([t,v])=>[+t,v.post??v]).sort((a,b)=>a[0]-b[0]);

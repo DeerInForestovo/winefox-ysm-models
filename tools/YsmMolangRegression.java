@@ -53,7 +53,11 @@ public final class YsmMolangRegression {
         // Only the item lookup is stubbed: the real held-item guard was checked in game.
         String guard = "ctrl.hold('mainhand', ':sword')";
         if (!script.contains(guard)) throw new AssertionError("Update the item-input adapter for this script");
-        var parsed = parserClass.getMethod("oOoo00O0o0oO0o0oO00OO0O0",String.class,boolean.class).invoke(parser,script.replace(guard,sword?"1":"0"),true);
+        String adapted = script.replace(guard,sword?"1":"0")
+            .replace("ctrl.hold('mainhand', ':axe')","0")
+            .replace("ctrl.hold('mainhand', 'minecraft:diamond_axe')","0")
+            .replace("ctrl.hold('mainhand', 'minecraft:netherite_axe')","0");
+        var parsed = parserClass.getMethod("oOoo00O0o0oO0o0oO00OO0O0",String.class,boolean.class).invoke(parser,adapted,true);
         var evaluatorClass = type("O00o00OOOo00OOOo0O0oOooo");
         var evaluator = evaluatorClass.getMethod("oOoo00O0o0oO0o0oO00OO0O0").invoke(null);
         var eval = type("o0oOo00o0oOOOOOo00o0O0oo").getMethod("evalUnsafe",evaluatorClass);

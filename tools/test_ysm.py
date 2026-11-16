@@ -13,5 +13,7 @@ parser.add_argument('--libraries', type=Path, required=True, help='Existing NeoF
 parser.add_argument('--script', type=Path, default=ROOT/'工程师酒狐/functions/winefox_bc_update@player_update.molang')
 args = parser.parse_args()
 classpath = [args.ysm_jar.resolve(), *sorted(args.libraries.resolve().rglob('*.jar'))]
-subprocess.run([args.java, '-cp', os.pathsep.join(map(str, classpath)),
-                str(ROOT/'tools/YsmMolangRegression.java'), str(args.script.resolve())], check=True)
+java = [args.java, '-cp', os.pathsep.join(map(str, classpath))]
+subprocess.run([*java, str(ROOT/'tools/YsmMolangRegression.java'), str(args.script.resolve())], check=True)
+subprocess.run([*java, str(ROOT/'tools/YsmAxeRegression.java'), str(args.script.resolve()),
+                str((ROOT/'工程师酒狐/animations/better_combat.animation.json').resolve())], check=True)
