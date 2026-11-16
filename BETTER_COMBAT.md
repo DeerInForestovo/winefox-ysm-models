@@ -2,7 +2,7 @@
 
 工程师酒狐模型适配 YSM 2.6.5／Better Combat 2.4.0（Minecraft 1.21.1 NeoForge）。最低需要 YSM 2.6.3 的 `ysm-builtin` 回退状态。
 
-- 主手剑的 `one_handed_slash_horizontal_right`／`left` 复用原作者左右挥砍姿态；`one_handed_stab` 使用新增的 idle 起手、微转抬剑、落剑瞄准、回转前送、分层收势并回到 idle 的动作。识别的是 Better Combat 当前动作名，不计数第三刀。保留模型原有的机械武器替换。
+- 主手剑的 `one_handed_slash_horizontal_right`／`left` 复用原作者左右挥砍姿态；`one_handed_stab` 使用新增的 idle 起手、微转抬剑、落剑瞄准、回转前送、分层收势并回到 idle 的动作。识别的是 Better Combat 当前动作名，不计数第三刀。兼容运行时名称被一对双引号包裹的情况，仅接受三个已知名称的精确裸值或精确带引号值，未知名称仍回退。保留模型原有的机械武器替换。
 - 未安装 Better Combat、未知动作、非剑及副手攻击回退 YSM 内置逻辑，原始动画文件保持原样。未承诺双持、非剑、附属自定义连招的专用动作。
 - `player_update` 函数统一维护动作相位；新动作、空档、挥动计数回绕均重置。按起手时的攻击速度归一化，0.5 相位是默认剑攻击的出手点；不读取或修改伤害和命中判定。Better Combat 自定义前摇比例、速度修正、超低帧率漏掉挥动重启或多人远端时序仍须客户端验证。
 - YSM 2.6.5 不支持 Bedrock 的 `anim_time_update`，因此运行资源使用自定义函数和曲线表达式，不依赖编辑器时钟。
@@ -25,7 +25,7 @@ python3 tools/test_ysm.py --ysm-jar <YSM-2.6.5.jar> --libraries <NeoForge-librar
 
 将本仓「工程师酒狐」整个文件夹放入 YSM custom 目录；首次安装也需把根目录 LICENSE、NOTICE.md、ASSET_LICENSE_CN.md 随模型保存。停机备份现有模型，保留自己的修改后替换，不在运行中的游戏资源目录内制作模型。
 
-`test_ysm.py` 使用外部提供的官方 YSM 2.6.5 JAR 中真实解析器／求值器，检查三个动作、回退及相位推进；不启动 Minecraft，不分发 JAR。Minecraft 输入由适配器提供，主手物品查询在游戏中核实。回归能捕获该版本对无代码块条件赋值的差异，避免仅依赖独立 Molang 解释器。反射入口绑定该发行版的混淆名称，升级 YSM 时必须复核测试适配器。
+`test_ysm.py` 使用外部提供的官方 YSM 2.6.5 JAR 中真实解析器／求值器，检查三个动作的裸值／带双引号值、回退及相位推进；不启动 Minecraft，不分发 JAR。Minecraft 输入由适配器提供，主手物品查询在游戏中核实。回归能捕获该版本对无代码块条件赋值的差异，避免仅依赖独立 Molang 解释器。反射入口绑定该发行版的混淆名称，升级 YSM 时必须复核测试适配器。
 
 自动检查与原生服务端资源注册不能代替客户端战斗验收。重点检查横砍→横砍→突刺、断连后重新起手、攻速变化、换武器，以及没有 Better Combat 时的原动作。
 

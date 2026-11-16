@@ -99,3 +99,8 @@ test('approved thrust keeps idle endpoints and claims only upper-body bones',()=
   }
   assert.equal(authored.winefox_bc_stab.animation_length,1);
 });
+
+test('quoted Better Combat names select the same three exact actions',()=>{
+  const f=fixture();
+  for(let i=1;i<=3;i++){f.s.name='"'+names[i]+'"';assert.equal(f.update(),['','right','left','stab'][i]);}
+});

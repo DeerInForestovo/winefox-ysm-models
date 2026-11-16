@@ -27,7 +27,7 @@ public final class YsmMolangRegression {
         var binding = type("O0OoOO0ooo0oOooo0oooO0o0");
         var parserClass = type("O0O0oOOOOo00o0o00o0o00oO");
         Map<String,Object> input = new HashMap<>();
-        input.put("ctrl", Proxy.newProxyInstance(binding.getClassLoader(), new Class<?>[]{binding}, (p,m,a) -> animation));
+        input.put("ctrl", Proxy.newProxyInstance(binding.getClassLoader(), new Class<?>[]{binding}, (p,m,a) -> new String(animation)));
         input.put("ysm", Proxy.newProxyInstance(binding.getClassLoader(), new Class<?>[]{binding}, (p,m,a) -> switch ((String)a[0]) {
             case "swinging_arm" -> (float)arm;
             case "swing_time" -> 0f;
@@ -66,10 +66,13 @@ public final class YsmMolangRegression {
         verify(script,"one_handed_slash_horizontal_right",true,0,1);
         verify(script,"one_handed_slash_horizontal_left",true,0,2);
         verify(script,"one_handed_stab",true,0,3);
+        verify(script,"\"one_handed_slash_horizontal_right\"",true,0,1);
+        verify(script,"\"one_handed_slash_horizontal_left\"",true,0,2);
+        verify(script,"\"one_handed_stab\"",true,0,3);
         verify(script,"",true,0,0);
         verify(script,"unknown_attack",true,0,0);
         verify(script,"one_handed_stab",false,0,0);
         verify(script,"one_handed_stab",true,1,0);
-        System.out.println("PASS: YSM 2.6.5 native routing, fallback and phase progression (7 cases)");
+        System.out.println("PASS: YSM 2.6.5 native routing, fallback and phase progression (10 cases)");
     }
 }
