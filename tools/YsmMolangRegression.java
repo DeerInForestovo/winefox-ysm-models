@@ -42,6 +42,9 @@ public final class YsmMolangRegression {
         var scopedBinding = bindings.get("v");
         var sample = scopedBinding.getClass().getMethod("getProperty", String.class).invoke(scopedBinding, "probe");
         var assignable = sample.getClass().getInterfaces()[0];
+        Map<String,Object> clock = new HashMap<>(); clock.put("life_time", 0f);
+        Object query = variables(binding, assignable, clock);
+        bindings.put("query", query); bindings.put("q", query);
         Map<String,Object> scoped = new HashMap<>(), temporary = new HashMap<>();
         Object v = variables(binding, assignable, scoped), t = variables(binding, assignable, temporary);
         bindings.put("v",v); bindings.put("variable",v); bindings.put("t",t); bindings.put("temp",t);
@@ -56,13 +59,32 @@ public final class YsmMolangRegression {
         int actual = ((Number)scoped.getOrDefault("winefox_bc_action",0f)).intValue();
         if (actual != expected) throw new AssertionError(animation + ": expected action " + expected + ", got " + actual);
         if (expected != 0) {
+            clock.put("life_time", .05f);
             eval.invoke(parsed,evaluator);
             float phase = ((Number)scoped.get("winefox_bc_phase")).floatValue();
             if (Math.abs(phase-.08f) > .000001f) throw new AssertionError("Native phase did not advance: "+phase);
+            eval.invoke(parsed,evaluator);
+            if (Math.abs(((Number)scoped.get("winefox_bc_phase")).floatValue()-phase) > .000001f)
+                throw new AssertionError("Duplicate evaluation advanced the phase");
+            // Execute the actual helper in the native parser, including conditional return.
+            String helper = Files.readString(Path.of(helperPath));
+            for (int linear = 0; linear <= 1; linear++) {
+                for (float u : new float[]{0f, .25f, .5f, .75f, 1f}) {
+                    float[] values = {u, 0, 1, 10, 20, linear, 0, 40};
+                    String expression = helper;
+                    for (int i=0;i<values.length;i++) expression=expression.replace("args["+i+"]", Float.toString(values[i]));
+                    var nativeHelper=parserClass.getMethod("oOoo00O0o0oO0o0oO00OO0O0",String.class,boolean.class).invoke(parser,expression,true);
+                    float result=((Number)eval.invoke(nativeHelper,evaluator)).floatValue();
+                    float expectedCurve=linear==1 ? 10+10*u : 5*u*u*u-5*u*u+10*u+10;
+                    if(Math.abs(result-expectedCurve)> .00001f) throw new AssertionError("Native curve: "+result+" != "+expectedCurve);
+                }
+            }
         }
     }
+    private static String helperPath;
     public static void main(String[] args) throws Exception {
         String script = Files.readString(Path.of(args[0]));
+        helperPath = Path.of(args[0]).resolveSibling("winefox_bc_lerp.molang").toString();
         verify(script,"one_handed_slash_horizontal_right",true,0,1);
         verify(script,"one_handed_slash_horizontal_left",true,0,2);
         verify(script,"one_handed_stab",true,0,3);
@@ -73,6 +95,6 @@ public final class YsmMolangRegression {
         verify(script,"unknown_attack",true,0,0);
         verify(script,"one_handed_stab",false,0,0);
         verify(script,"one_handed_stab",true,1,0);
-        System.out.println("PASS: YSM 2.6.5 native routing, fallback and phase progression (10 cases)");
+        System.out.println("PASS: YSM 2.6.5 native routing, fallback, render clock and interpolation (10 routing cases)");
     }
 }

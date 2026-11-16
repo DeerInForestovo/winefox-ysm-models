@@ -15,12 +15,13 @@ const clips = json('animations/better_combat.animation.json').animations;
 const authored = JSON.parse(fs.readFileSync(path.join(root,'authoring/better_combat.keyframes.json'),'utf8')).animations;
 const names=['','one_handed_slash_horizontal_right','one_handed_slash_horizontal_left','one_handed_stab'];
 function fixture() {
-  const s={name:'',sword:true,arm:0,swinging:true,tick:0,speed:1.6,dt:0.05};
-  const vm = new Molang({ctrl:{hold:()=>s.sword,bcombat_attack_animation:()=>s.name},
+  const s={name:'',sword:true,arm:0,swinging:true,tick:0,speed:1.6,dt:0.05,now:0};
+  const vm = new Molang({query:{life_time:()=>s.now},ctrl:{hold:()=>s.sword,bcombat_attack_animation:()=>s.name},
     ysm:{swinging_arm:()=>s.arm,swinging:()=>s.swinging,swing_time:()=>s.tick,attack_speed:()=>s.speed,time_delta:()=>s.dt},
     fn:{winefox_bc_lerp:(...args)=>new Molang().execute(lerp.replace(/args\[(\d)\]/g,(_,i)=>String(args[+i])))}});
   let state=controller.initial_state;
-  return {s,vm,update() {
+  return {s,vm,update(advance=true) {
+    if(advance)s.now+=s.dt;
     vm.execute(script);
     for(const t of controller.states[state].transitions) {
       const [next,condition]=Object.entries(t)[0];
@@ -53,7 +54,7 @@ test('shared phase follows attack speed, resets on repeated same-name swing and 
     assert.equal(f.vm.execute('v.winefox_bc_phase'),1);
   }
 });
-test('all generated curves hit authored poses and interpolate without overshoot',()=>{
+test('generated curves match four-point Catmull-Rom and linear authoring',()=>{
   const f=fixture();let samples=0;
   for(const [name,clip] of Object.entries(clips)){
     for(const [bone,channels] of Object.entries(authored[name].bones))for(const [channel,frames] of Object.entries(channels)){
@@ -64,8 +65,16 @@ test('all generated curves hit authored poses and interpolate without overshoot'
         f.vm.execute(`v.winefox_bc_phase=${phase};`);
         for(let axis=0;axis<3;axis++){
           const raw=frames[Object.keys(frames).find(k=>+k===t0)];
-          const eased=raw?.lerp_mode==='catmullrom'?u*u*(3-2*u):u;
-          const expected=a[axis]+(b[axis]-a[axis])*eased;
+          const next=frames[Object.keys(frames).find(k=>+k===t1)];
+          const cubic=raw?.lerp_mode==='catmullrom'||next?.lerp_mode==='catmullrom';
+          // Reference cubic Hermite basis (THREE.SplineCurve / Blockbench),
+          // independent of the runtime helper's polynomial expansion.
+          const p0=points[Math.max(0,i-1)][1][axis];
+          const p3=points[Math.min(points.length-1,i+2)][1][axis];
+          const expected=cubic?
+            (2*u**3-3*u*u+1)*a[axis]+(u**3-2*u*u+u)*(b[axis]-p0)/2+
+            (-2*u**3+3*u*u)*b[axis]+(u**3-u*u)*(p3-a[axis])/2:
+            a[axis]+(b[axis]-a[axis])*u;
           const actual=f.vm.execute(clip.bones[bone][channel][axis]);
           assert.ok(Number.isFinite(actual)&&Math.abs(expected-actual)<1e-6,`${name}/${bone}/${channel}/${phase}/${axis}`);samples++;
         }
@@ -103,4 +112,27 @@ test('approved thrust keeps idle endpoints and claims only upper-body bones',()=
 test('quoted Better Combat names select the same three exact actions',()=>{
   const f=fixture();
   for(let i=1;i<=3;i++){f.s.name='"'+names[i]+'"';assert.equal(f.update(),['','right','left','stab'][i]);}
+});
+
+
+test('render clock advances within a tick and is invariant to duplicate evaluations',()=>{
+  for(const fps of [30,60,144]){
+    const f=fixture();f.s.name=names[1];f.s.dt=0;f.update();
+    for(let frame=1;frame<=Math.floor(fps/2);frame++){
+      f.s.now=frame/fps;
+      f.s.tick=Math.floor(f.s.now*20);
+      f.update(false);
+      const phase=f.vm.execute('v.winefox_bc_phase');
+      assert.ok(Math.abs(phase-f.s.now*f.s.speed)<1e-8);
+      f.update(false);
+      assert.equal(f.vm.execute('v.winefox_bc_phase'),phase);
+    }
+  }
+});
+
+test('Catmull-Rom passes a moving middle key without a smoothstep stop',()=>{
+  const f=fixture();
+  const sample=u=>f.vm.execute(`fn.winefox_bc_lerp(${u},0,1,10,20,0,0,30)`);
+  assert.ok(Math.abs((sample(1e-4)-sample(0))/1e-4-10)<1e-5);
+  assert.ok(Math.abs((sample(1)-sample(1-1e-4))/1e-4-10)<1e-5);
 });

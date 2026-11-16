@@ -25,15 +25,25 @@ def number(value):
 def curve(frames, axis):
     if not isinstance(frames, dict):
         return vector(frames)[axis]
-    points = sorted((float(t), vector(v)[axis]) for t, v in frames.items())
+    keys = sorted(frames, key=float)
+    points = [(float(t), vector(frames[t])[axis]) for t in keys]
     expression = number(points[-1][1])
-    for (a, start), (b, end) in reversed(list(zip(points, points[1:]))):
-        if start == end:
+    for i in reversed(range(len(points) - 1)):
+        a, start = points[i]
+        b, end = points[i + 1]
+        # Blockbench selects Catmull-Rom when either endpoint requests it.
+        cubic = any(isinstance(frames[k], dict) and
+                    frames[k].get('lerp_mode') == 'catmullrom'
+                    for k in keys[i:i + 2])
+        left = points[max(0, i - 1)][1]
+        right = points[min(len(points) - 1, i + 2)][1]
+        if start == end and (not cubic or left == start == right):
             segment = number(start)
         else:
-            frame = frames[next(k for k in frames if float(k) == a)]
-            linear = 0 if isinstance(frame, dict) and frame.get('lerp_mode') == 'catmullrom' else 1
-            segment = f'fn.winefox_bc_lerp(v.winefox_bc_phase, {number(a)}, {number(b)}, {number(start)}, {number(end)}, {linear})'
+            args = [a, b, start, end, 0 if cubic else 1]
+            if cubic:
+                args += [left, right]
+            segment = 'fn.winefox_bc_lerp(v.winefox_bc_phase, ' + ', '.join(map(number, args)) + ')'
         expression = f'v.winefox_bc_phase < {number(b)} ? ({segment}) : ({expression})'
     return expression
 
