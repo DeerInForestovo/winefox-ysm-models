@@ -12,6 +12,7 @@ const script = read('functions/winefox_bc_update@player_update.molang').replace(
 const lerp = read('functions/winefox_bc_lerp.molang').replace(/\/\/[^\n]*/g,'');
 const controller = json('controller/better_combat.animation_controllers.json').animation_controllers['player.swing'];
 const clips = json('animations/better_combat.animation.json').animations;
+const original = json('animations/main.animation.json').animations['swing$minecraft:iron_sword'];
 const authored = JSON.parse(fs.readFileSync(path.join(root,'authoring/better_combat.keyframes.json'),'utf8')).animations;
 const names=['','one_handed_slash_horizontal_right','one_handed_slash_horizontal_left','one_handed_stab'];
 function fixture() {
@@ -20,6 +21,9 @@ function fixture() {
     ysm:{swinging_arm:()=>s.arm,swinging:()=>s.swinging,swing_time:()=>s.tick,attack_speed:()=>s.speed,time_delta:()=>s.dt},
     fn:{winefox_bc_lerp:(...args)=>new Molang().execute(lerp.replace(/args\[(\d)\]/g,(_,i)=>String(args[+i])))}});
   vm.execute('v.winefox_bc_action=0;v.winefox_bc_input=0;v.winefox_bc_phase=0;v.winefox_bc_start=0;v.winefox_bc_speed=0;v.winefox_bc_last_swing=0;');
+  vm.execute('v.winefox_bc_blend=1;v.winefox_bc_combo=0;v.winefox_bc_recover_at=0;');
+  const cacheNames=new Set(script.match(/v\.winefox_bc_(?:from|pose)_[a-z0-9_]+/g));
+  for(const key of cacheNames)vm.execute(`${key}=0;`);
   let state=controller.initial_state;
   return {s,vm,update(advance=true) {
     if(advance)s.now+=s.dt;
@@ -34,10 +38,10 @@ function fixture() {
 test('BC chooses the attack: combo, interrupted combo, direct stab and arbitrary order',()=>{
   const f=fixture();
   for(const n of [1,2,3,0,1,0,3,2,1,3,0]){
-    if(n===0)f.s.now+=2;
     f.s.name=names[n];
+    if(n===0){f.update();f.s.now+=2;}
     assert.equal(f.update(),['ysm-builtin','right','left','stab'][n]);
-    assert.equal(f.vm.execute('v.winefox_bc_phase'),0);
+    assert.equal(f.vm.execute('v.winefox_bc_phase'),n===0?0:f.vm.execute('v.winefox_bc_combo')?.2083:0);
   }
 });
 test('unknown, absent, non-sword and offhand attacks restore the builtin controller',()=>{
@@ -52,9 +56,9 @@ test('shared phase follows attack speed, resets on repeated same-name swing and 
     const f=fixture();f.s.speed=speed;f.s.dt=1/(speed*10);f.s.name=names[3];f.update();
     for(let tick=1;tick<=5;tick++){f.s.tick=tick;f.update();}
     assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-.5)<1e-8);
-    f.s.tick=0;assert.equal(f.update(),'stab');assert.equal(f.vm.execute('v.winefox_bc_phase'),0);
+    f.s.tick=0;assert.equal(f.update(),'stab');assert.equal(f.vm.execute('v.winefox_bc_phase'),.2083);
     for(let tick=1;tick<30;tick++){f.s.tick=tick;f.update();}
-    assert.equal(f.vm.execute('v.winefox_bc_phase'),1);
+    assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-.6)<1e-8);
   }
 });
 test('generated curves match four-point Catmull-Rom and linear authoring',()=>{
@@ -126,7 +130,8 @@ test('render clock advances within a tick and is invariant to duplicate evaluati
       f.s.tick=Math.floor(f.s.now*20);
       f.update(false);
       const phase=f.vm.execute('v.winefox_bc_phase');
-      assert.ok(Math.abs(phase-f.s.now*f.s.speed)<1e-8);
+      if(f.s.now*f.s.speed<=.5)assert.ok(Math.abs(phase-f.s.now*f.s.speed)<1e-8);
+      assert.ok(phase<=.6667,'active input must not start the idle return');
       f.update(false);
       assert.equal(f.vm.execute('v.winefox_bc_phase'),phase);
     }
@@ -141,31 +146,76 @@ test('Catmull-Rom passes a moving middle key without a smoothstep stop',()=>{
 });
 
 
-test('empty attack input completes authored recovery before releasing the controller',()=>{
-  for(const name of names.slice(1))for(const empty of ['', '\"\"']){
-    const f=fixture();f.s.name=name;f.s.dt=0;f.update();
-    f.s.now=.4/f.s.speed;f.s.tick=3;f.update(false);
-    const state=f.update(false);
-    f.s.name=empty;f.s.swinging=false;
-    f.s.now=.7/f.s.speed;
-    assert.equal(f.update(false),state);
-    assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-.7)<1e-8);
-    f.s.now=.95/f.s.speed;assert.equal(f.update(false),state);
-    f.s.now=1.01/f.s.speed;assert.equal(f.update(false),'ysm-builtin');
+
+function render(f){
+  const action=f.vm.execute('v.winefox_bc_action');
+  if(!action)return {};
+  const result={};
+  for(const [bone,channels] of Object.entries(clips[['','winefox_bc_right','winefox_bc_left','winefox_bc_stab'][action]].bones)){
+    for(const [channel,values] of Object.entries(channels)){
+      if(!['rotation','position'].includes(channel))continue;
+      result[`${bone}/${channel}`]=values.map(v=>typeof v==='number'?v:f.vm.execute(v));
+    }
+  }
+  return result;
+}
+
+test('single slash holds and recovers with original .75/1/1.4167/1.5 second tail landmarks',()=>{
+  for(const action of [1,2])for(const speed of [.8,1.6,3.2]){
+    const f=fixture();f.s.dt=0;f.s.speed=speed;f.s.name=names[action];f.update();
+    f.s.now=.5/speed+.05;f.s.name='';f.s.swinging=false;f.update(false);
+    const recoveryAt=f.vm.execute('v.winefox_bc_recover_at');
+    const armKey='RightArm/rotation';
+    for(const [seconds,phase] of [[0,.6667],[.25,.7917],[.6667,.9167],[.7499,.9999]]){
+      f.s.now=recoveryAt+seconds;assert.equal(f.update(false),action===1?'right':'left');
+      assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-phase)<.0002);
+      const arm=render(f)[armKey];
+      assert.ok(arm.every(Number.isFinite));
+      if(seconds===0||seconds===.25||seconds===.6667){
+        const originalTime=seconds===0?'0.75':seconds===.25?'1.0':'1.4167';
+        f.vm.execute(`v.qh=${action};v.jump=0;v.random=0;`);
+        const source=original.bones.RightArm.rotation[originalTime].post.map(value=>value.replace(/;\s*$/, ''));
+        for(let axis=0;axis<3;axis++)assert.ok(Math.abs(arm[axis]-f.vm.execute(source[axis]))<1e-5,`original return pose mismatch: action ${action} speed ${speed} time ${originalTime} axis ${axis}: ${arm[axis]} / ${f.vm.execute(source[axis])}`);
+      }
+    }
+    f.s.now=recoveryAt+.76;assert.equal(f.update(false),'ysm-builtin');
   }
 });
 
-test('recovery yields immediately to a new attack, same-name restart or unsupported input',()=>{
-  for(const next of [names[1],names[2],names[3],'unsupported']){
-    const f=fixture();f.s.name=names[1];f.s.dt=0;f.update();
-    f.s.now=.3;f.s.name='';f.s.swinging=false;f.update(false);
-    f.s.now=.35;f.s.name=next;f.s.swinging=true;
-    assert.equal(f.update(false),next==='unsupported'?'ysm-builtin':['','right','left','stab'][names.indexOf(next)]);
-    assert.equal(f.vm.execute('v.winefox_bc_phase'),0);
+test('active BC attack never returns to idle even past a full cooldown',()=>{
+  for(const action of [1,2,3]){
+    const f=fixture();f.s.dt=0;f.s.name=names[action];f.update();
+    f.s.now=3;f.update(false);
+    assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-(action===3?.6:.6667))<1e-8);
   }
-  for(const change of [{sword:false},{arm:1}]){
-    const f=fixture();f.s.name=names[1];f.s.dt=0;f.update();
-    f.s.now=.3;f.s.name='';f.update(false);Object.assign(f.s,change);
+});
+
+test('combo skips idle and starts from the displayed pose for every attack pairing',()=>{
+  for(const previous of [1,2,3])for(const next of [1,2,3])for(const gap of [false,true]){
+    const f=fixture();f.s.dt=0;f.s.name=names[previous];f.update();render(f);
+    f.s.now=.45;f.s.tick=5;f.update(false);render(f);
+    if(gap){f.s.name='';f.s.swinging=false;f.s.now=.5;f.update(false);render(f);}
+    const before=render(f);
+    f.s.now+=.04;f.s.name=names[next];f.s.swinging=true;f.s.tick=0;
+    f.update(false);
+    assert.equal(f.vm.execute('v.winefox_bc_phase'),.2083);
+    const after=render(f);
+    for(const key of Object.keys(before)){
+      for(let axis=0;axis<3;axis++)assert.ok(Math.abs(before[key][axis]-after[key][axis])<1e-7,`${previous}->${next} ${key}`);
+    }
+    f.update(false);assert.deepEqual(render(f),after,'duplicate evaluation changed the blend origin');
+    f.s.now+=.15;f.s.tick=2;f.update(false);render(f);
+    assert.equal(f.vm.execute('v.winefox_bc_blend'),1);
+  }
+});
+
+test('cancel guards release immediately during recovery and empty input cannot start an attack',()=>{
+  for(const change of [{sword:false},{arm:1},{name:'unsupported'}]){
+    const f=fixture();f.s.dt=0;f.s.name=names[1];f.update();
+    f.s.now=.4;f.s.name='';f.update(false);Object.assign(f.s,change);
     assert.equal(f.update(false),'ysm-builtin');
+  }
+  for(const empty of ['', '\"\"']){
+    const f=fixture();f.s.name=empty;assert.equal(f.update(),'ysm-builtin');
   }
 });

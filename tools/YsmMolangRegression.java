@@ -71,17 +71,32 @@ public final class YsmMolangRegression {
             attacks.put("bcombat_attack_animation", ""); clock.put("life_time", .4f);
             eval.invoke(parsed,evaluator);
             if (((Number)scoped.get("winefox_bc_action")).intValue()!=expected ||
-                Math.abs(((Number)scoped.get("winefox_bc_phase")).floatValue()-.64f)>.000001f)
+                ((Number)scoped.get("winefox_bc_phase")).floatValue()<.5f ||
+                ((Number)scoped.get("winefox_bc_phase")).floatValue()>.6668f)
                 throw new AssertionError("Attack release truncated recovery");
             // Same-name input after a gap must restart even while its recovery is visible.
+            scoped.put("winefox_bc_pose_rightarm_rotation_0", 37f);
             attacks.put("bcombat_attack_animation", animation); clock.put("life_time", .45f);
             eval.invoke(parsed,evaluator);
-            if (((Number)scoped.get("winefox_bc_phase")).floatValue()!=0f)
+            if (Math.abs(((Number)scoped.get("winefox_bc_phase")).floatValue()-.2083f)>.000001f)
                 throw new AssertionError("Recovery blocked same-name restart");
+            if (((Number)scoped.get("winefox_bc_from_rightarm_rotation_0")).floatValue()!=37f)
+                throw new AssertionError("Combo did not snapshot the displayed pose");
+            if (((Number)scoped.get("winefox_bc_blend")).floatValue()!=0f)
+                throw new AssertionError("Combo did not start at its snapshot");
             attacks.put("bcombat_attack_animation", ""); clock.put("life_time", 1.1f);
+            eval.invoke(parsed,evaluator);
+            clock.put("life_time", 2.1f);
             eval.invoke(parsed,evaluator);
             if (((Number)scoped.get("winefox_bc_action")).intValue()!=0)
                 throw new AssertionError("Recovery did not release the controller");
+            scoped.put("winefox_bc_blend", .25f);
+            // Animation channels are parsed with isScript=false, unlike player_update.
+            var channel = parserClass.getMethod("oOoo00O0o0oO0o0oO00OO0O0",String.class,boolean.class).invoke(parser,
+                "v.winefox_bc_pose_probe = v.winefox_bc_from_rightarm_rotation_0 + (10 - v.winefox_bc_from_rightarm_rotation_0) * v.winefox_bc_blend; return v.winefox_bc_pose_probe;",false);
+            float displayed=((Number)eval.invoke(channel,evaluator)).floatValue();
+            if(Math.abs(displayed-30.25f)>.00001f || Math.abs(((Number)scoped.get("winefox_bc_pose_probe")).floatValue()-displayed)>.00001f)
+                throw new AssertionError("Animation-channel pose cache/blend failed");
             // Execute the actual helper in the native parser, including conditional return.
             String helper = Files.readString(Path.of(helperPath));
             for (int linear = 0; linear <= 1; linear++) {
