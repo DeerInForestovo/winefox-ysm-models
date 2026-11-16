@@ -42,6 +42,8 @@ public final class YsmMolangRegression {
         var scopedBinding = bindings.get("v");
         var sample = scopedBinding.getClass().getMethod("getProperty", String.class).invoke(scopedBinding, "probe");
         var assignable = sample.getClass().getInterfaces()[0];
+        Map<String,Object> attacks = new HashMap<>(); attacks.put("bcombat_attack_animation", animation);
+        bindings.put("ctrl", variables(binding, assignable, attacks));
         Map<String,Object> clock = new HashMap<>(); clock.put("life_time", 0f);
         Object query = variables(binding, assignable, clock);
         bindings.put("query", query); bindings.put("q", query);
@@ -66,6 +68,20 @@ public final class YsmMolangRegression {
             eval.invoke(parsed,evaluator);
             if (Math.abs(((Number)scoped.get("winefox_bc_phase")).floatValue()-phase) > .000001f)
                 throw new AssertionError("Duplicate evaluation advanced the phase");
+            attacks.put("bcombat_attack_animation", ""); clock.put("life_time", .4f);
+            eval.invoke(parsed,evaluator);
+            if (((Number)scoped.get("winefox_bc_action")).intValue()!=expected ||
+                Math.abs(((Number)scoped.get("winefox_bc_phase")).floatValue()-.64f)>.000001f)
+                throw new AssertionError("Attack release truncated recovery");
+            // Same-name input after a gap must restart even while its recovery is visible.
+            attacks.put("bcombat_attack_animation", animation); clock.put("life_time", .45f);
+            eval.invoke(parsed,evaluator);
+            if (((Number)scoped.get("winefox_bc_phase")).floatValue()!=0f)
+                throw new AssertionError("Recovery blocked same-name restart");
+            attacks.put("bcombat_attack_animation", ""); clock.put("life_time", 1.1f);
+            eval.invoke(parsed,evaluator);
+            if (((Number)scoped.get("winefox_bc_action")).intValue()!=0)
+                throw new AssertionError("Recovery did not release the controller");
             // Execute the actual helper in the native parser, including conditional return.
             String helper = Files.readString(Path.of(helperPath));
             for (int linear = 0; linear <= 1; linear++) {
@@ -95,6 +111,6 @@ public final class YsmMolangRegression {
         verify(script,"unknown_attack",true,0,0);
         verify(script,"one_handed_stab",false,0,0);
         verify(script,"one_handed_stab",true,1,0);
-        System.out.println("PASS: YSM 2.6.5 native routing, fallback, render clock and interpolation (10 routing cases)");
+        System.out.println("PASS: YSM 2.6.5 native routing, fallback, render clock, recovery and interpolation (10 routing cases)");
     }
 }

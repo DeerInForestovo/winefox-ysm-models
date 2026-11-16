@@ -19,6 +19,7 @@ function fixture() {
   const vm = new Molang({query:{life_time:()=>s.now},ctrl:{hold:()=>s.sword,bcombat_attack_animation:()=>s.name},
     ysm:{swinging_arm:()=>s.arm,swinging:()=>s.swinging,swing_time:()=>s.tick,attack_speed:()=>s.speed,time_delta:()=>s.dt},
     fn:{winefox_bc_lerp:(...args)=>new Molang().execute(lerp.replace(/args\[(\d)\]/g,(_,i)=>String(args[+i])))}});
+  vm.execute('v.winefox_bc_action=0;v.winefox_bc_input=0;v.winefox_bc_phase=0;v.winefox_bc_start=0;v.winefox_bc_speed=0;v.winefox_bc_last_swing=0;');
   let state=controller.initial_state;
   return {s,vm,update(advance=true) {
     if(advance)s.now+=s.dt;
@@ -33,13 +34,15 @@ function fixture() {
 test('BC chooses the attack: combo, interrupted combo, direct stab and arbitrary order',()=>{
   const f=fixture();
   for(const n of [1,2,3,0,1,0,3,2,1,3,0]){
+    if(n===0)f.s.now+=2;
     f.s.name=names[n];
     assert.equal(f.update(),['ysm-builtin','right','left','stab'][n]);
     assert.equal(f.vm.execute('v.winefox_bc_phase'),0);
   }
 });
 test('unknown, absent, non-sword and offhand attacks restore the builtin controller',()=>{
-  for(const change of [{name:''},{name:'two_handed_slam'},{sword:false},{arm:1}]){
+  assert.equal(fixture().update(),'ysm-builtin');
+  for(const change of [{name:'two_handed_slam'},{sword:false},{arm:1}]){
     const f=fixture();f.s.name=names[3];assert.equal(f.update(),'stab');
     Object.assign(f.s,change);assert.equal(f.update(),'ysm-builtin');
   }
@@ -135,4 +138,34 @@ test('Catmull-Rom passes a moving middle key without a smoothstep stop',()=>{
   const sample=u=>f.vm.execute(`fn.winefox_bc_lerp(${u},0,1,10,20,0,0,30)`);
   assert.ok(Math.abs((sample(1e-4)-sample(0))/1e-4-10)<1e-5);
   assert.ok(Math.abs((sample(1)-sample(1-1e-4))/1e-4-10)<1e-5);
+});
+
+
+test('empty attack input completes authored recovery before releasing the controller',()=>{
+  for(const name of names.slice(1))for(const empty of ['', '\"\"']){
+    const f=fixture();f.s.name=name;f.s.dt=0;f.update();
+    f.s.now=.4/f.s.speed;f.s.tick=3;f.update(false);
+    const state=f.update(false);
+    f.s.name=empty;f.s.swinging=false;
+    f.s.now=.7/f.s.speed;
+    assert.equal(f.update(false),state);
+    assert.ok(Math.abs(f.vm.execute('v.winefox_bc_phase')-.7)<1e-8);
+    f.s.now=.95/f.s.speed;assert.equal(f.update(false),state);
+    f.s.now=1.01/f.s.speed;assert.equal(f.update(false),'ysm-builtin');
+  }
+});
+
+test('recovery yields immediately to a new attack, same-name restart or unsupported input',()=>{
+  for(const next of [names[1],names[2],names[3],'unsupported']){
+    const f=fixture();f.s.name=names[1];f.s.dt=0;f.update();
+    f.s.now=.3;f.s.name='';f.s.swinging=false;f.update(false);
+    f.s.now=.35;f.s.name=next;f.s.swinging=true;
+    assert.equal(f.update(false),next==='unsupported'?'ysm-builtin':['','right','left','stab'][names.indexOf(next)]);
+    assert.equal(f.vm.execute('v.winefox_bc_phase'),0);
+  }
+  for(const change of [{sword:false},{arm:1}]){
+    const f=fixture();f.s.name=names[1];f.s.dt=0;f.update();
+    f.s.now=.3;f.s.name='';f.update(false);Object.assign(f.s,change);
+    assert.equal(f.update(false),'ysm-builtin');
+  }
 });
