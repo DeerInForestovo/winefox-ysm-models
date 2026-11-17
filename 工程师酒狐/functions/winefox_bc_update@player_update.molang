@@ -1,0 +1,238 @@
+// Better Combat owns the attack choice. Never count a three-hit combo here.
+// Explicit blocks are required here: YSM 2.6.5 mis-evaluates the shorthand
+// conditional assignment. tools/test_ysm.py exercises the actual parser.
+t.action = 0;
+t.sword = ctrl.hold('mainhand', ':sword');
+t.axe = ctrl.hold('mainhand', ':axe');
+t.model_axe = ctrl.hold('mainhand', 'minecraft:diamond_axe') || ctrl.hold('mainhand', 'minecraft:netherite_axe');
+t.right = ctrl.bcombat_attack_animation == 'one_handed_slash_horizontal_right' || ctrl.bcombat_attack_animation == '"one_handed_slash_horizontal_right"';
+t.left = ctrl.bcombat_attack_animation == 'one_handed_slash_horizontal_left' || ctrl.bcombat_attack_animation == '"one_handed_slash_horizontal_left"';
+(t.sword && ysm.swinging_arm == 0) ? {
+    t.right ? { t.action = 1; };
+    t.left ? { t.action = 2; };
+    (ctrl.bcombat_attack_animation == 'one_handed_stab' || ctrl.bcombat_attack_animation == '"one_handed_stab"') ? { t.action = 3; };
+};
+(t.axe && ysm.swinging_arm == 0) ? {
+    t.right ? {
+        t.model_axe ? { t.action = 4; } : { t.action = 6; };
+    };
+    t.left ? {
+        t.model_axe ? { t.action = 5; } : { t.action = 7; };
+    };
+};
+// Attack selection belongs to Better Combat; presentation has its own recovery.
+t.now = query.life_time;
+t.restart = t.action > 0 && (t.action != v.winefox_bc_input || (ysm.swinging && ysm.swing_time < v.winefox_bc_last_swing));
+t.restart ? {
+    v.winefox_bc_combo = t.action <= 3 && v.winefox_bc_action > 0 && v.winefox_bc_action <= 3;
+    t.axe_continue = 0;
+    (t.action >= 4 && v.winefox_bc_action >= 4 && v.winefox_bc_axe_stage == 2) ? {
+        ((t.action <= 5 && v.winefox_bc_action <= 5) || (t.action >= 6 && v.winefox_bc_action >= 6)) ? { t.axe_continue = 1; };
+    };
+    v.winefox_bc_axe_capture = 0;
+    (t.action >= 4 && v.winefox_bc_action >= 4) ? {
+        (t.axe_continue == 0) ? { v.winefox_bc_axe_capture = 1; };
+    };
+    // BEGIN GENERATED POSE SNAPSHOT
+    v.winefox_bc_combo ? {
+        v.winefox_bc_from_arm_position_0 = v.winefox_bc_pose_arm_position_0;
+        v.winefox_bc_from_arm_position_1 = v.winefox_bc_pose_arm_position_1;
+        v.winefox_bc_from_arm_position_2 = v.winefox_bc_pose_arm_position_2;
+        v.winefox_bc_from_arm_rotation_0 = v.winefox_bc_pose_arm_rotation_0;
+        v.winefox_bc_from_arm_rotation_1 = v.winefox_bc_pose_arm_rotation_1;
+        v.winefox_bc_from_arm_rotation_2 = v.winefox_bc_pose_arm_rotation_2;
+        v.winefox_bc_from_head_rotation_0 = v.winefox_bc_pose_head_rotation_0;
+        v.winefox_bc_from_head_rotation_1 = v.winefox_bc_pose_head_rotation_1;
+        v.winefox_bc_from_head_rotation_2 = v.winefox_bc_pose_head_rotation_2;
+        v.winefox_bc_from_leftarm_rotation_0 = v.winefox_bc_pose_leftarm_rotation_0;
+        v.winefox_bc_from_leftarm_rotation_1 = v.winefox_bc_pose_leftarm_rotation_1;
+        v.winefox_bc_from_leftarm_rotation_2 = v.winefox_bc_pose_leftarm_rotation_2;
+        v.winefox_bc_from_leftforearm_rotation_0 = v.winefox_bc_pose_leftforearm_rotation_0;
+        v.winefox_bc_from_leftforearm_rotation_1 = v.winefox_bc_pose_leftforearm_rotation_1;
+        v.winefox_bc_from_leftforearm_rotation_2 = v.winefox_bc_pose_leftforearm_rotation_2;
+        v.winefox_bc_from_rightarm_rotation_0 = v.winefox_bc_pose_rightarm_rotation_0;
+        v.winefox_bc_from_rightarm_rotation_1 = v.winefox_bc_pose_rightarm_rotation_1;
+        v.winefox_bc_from_rightarm_rotation_2 = v.winefox_bc_pose_rightarm_rotation_2;
+        v.winefox_bc_from_rightforearm_rotation_0 = v.winefox_bc_pose_rightforearm_rotation_0;
+        v.winefox_bc_from_rightforearm_rotation_1 = v.winefox_bc_pose_rightforearm_rotation_1;
+        v.winefox_bc_from_rightforearm_rotation_2 = v.winefox_bc_pose_rightforearm_rotation_2;
+        v.winefox_bc_from_righthand_rotation_0 = v.winefox_bc_pose_righthand_rotation_0;
+        v.winefox_bc_from_righthand_rotation_1 = v.winefox_bc_pose_righthand_rotation_1;
+        v.winefox_bc_from_righthand_rotation_2 = v.winefox_bc_pose_righthand_rotation_2;
+        v.winefox_bc_from_upbody_position_0 = v.winefox_bc_pose_upbody_position_0;
+        v.winefox_bc_from_upbody_position_1 = v.winefox_bc_pose_upbody_position_1;
+        v.winefox_bc_from_upbody_position_2 = v.winefox_bc_pose_upbody_position_2;
+        v.winefox_bc_from_upbody_rotation_0 = v.winefox_bc_pose_upbody_rotation_0;
+        v.winefox_bc_from_upbody_rotation_1 = v.winefox_bc_pose_upbody_rotation_1;
+        v.winefox_bc_from_upbody_rotation_2 = v.winefox_bc_pose_upbody_rotation_2;
+        v.winefox_bc_from_upperbody_position_0 = v.winefox_bc_pose_upperbody_position_0;
+        v.winefox_bc_from_upperbody_position_1 = v.winefox_bc_pose_upperbody_position_1;
+        v.winefox_bc_from_upperbody_position_2 = v.winefox_bc_pose_upperbody_position_2;
+        v.winefox_bc_from_upperbody_rotation_0 = v.winefox_bc_pose_upperbody_rotation_0;
+        v.winefox_bc_from_upperbody_rotation_1 = v.winefox_bc_pose_upperbody_rotation_1;
+        v.winefox_bc_from_upperbody_rotation_2 = v.winefox_bc_pose_upperbody_rotation_2;
+    };
+    // END GENERATED POSE SNAPSHOT
+    // BEGIN GENERATED AXE POSE SNAPSHOT
+    v.winefox_bc_axe_capture ? {
+        v.winefox_bc_axe_from_arm_position_0 = v.winefox_bc_axe_pose_arm_position_0;
+        v.winefox_bc_axe_from_arm_position_1 = v.winefox_bc_axe_pose_arm_position_1;
+        v.winefox_bc_axe_from_arm_position_2 = v.winefox_bc_axe_pose_arm_position_2;
+        v.winefox_bc_axe_from_arm_rotation_0 = v.winefox_bc_axe_pose_arm_rotation_0;
+        v.winefox_bc_axe_from_arm_rotation_1 = v.winefox_bc_axe_pose_arm_rotation_1;
+        v.winefox_bc_axe_from_arm_rotation_2 = v.winefox_bc_axe_pose_arm_rotation_2;
+        v.winefox_bc_axe_from_head_rotation_0 = v.winefox_bc_axe_pose_head_rotation_0;
+        v.winefox_bc_axe_from_head_rotation_1 = v.winefox_bc_axe_pose_head_rotation_1;
+        v.winefox_bc_axe_from_head_rotation_2 = v.winefox_bc_axe_pose_head_rotation_2;
+        v.winefox_bc_axe_from_leftarm_rotation_0 = v.winefox_bc_axe_pose_leftarm_rotation_0;
+        v.winefox_bc_axe_from_leftarm_rotation_1 = v.winefox_bc_axe_pose_leftarm_rotation_1;
+        v.winefox_bc_axe_from_leftarm_rotation_2 = v.winefox_bc_axe_pose_leftarm_rotation_2;
+        v.winefox_bc_axe_from_leftforearm_rotation_0 = v.winefox_bc_axe_pose_leftforearm_rotation_0;
+        v.winefox_bc_axe_from_leftforearm_rotation_1 = v.winefox_bc_axe_pose_leftforearm_rotation_1;
+        v.winefox_bc_axe_from_leftforearm_rotation_2 = v.winefox_bc_axe_pose_leftforearm_rotation_2;
+        v.winefox_bc_axe_from_rightarm_rotation_0 = v.winefox_bc_axe_pose_rightarm_rotation_0;
+        v.winefox_bc_axe_from_rightarm_rotation_1 = v.winefox_bc_axe_pose_rightarm_rotation_1;
+        v.winefox_bc_axe_from_rightarm_rotation_2 = v.winefox_bc_axe_pose_rightarm_rotation_2;
+        v.winefox_bc_axe_from_rightforearm_rotation_0 = v.winefox_bc_axe_pose_rightforearm_rotation_0;
+        v.winefox_bc_axe_from_rightforearm_rotation_1 = v.winefox_bc_axe_pose_rightforearm_rotation_1;
+        v.winefox_bc_axe_from_rightforearm_rotation_2 = v.winefox_bc_axe_pose_rightforearm_rotation_2;
+        v.winefox_bc_axe_from_righthand_rotation_0 = v.winefox_bc_axe_pose_righthand_rotation_0;
+        v.winefox_bc_axe_from_righthand_rotation_1 = v.winefox_bc_axe_pose_righthand_rotation_1;
+        v.winefox_bc_axe_from_righthand_rotation_2 = v.winefox_bc_axe_pose_righthand_rotation_2;
+        v.winefox_bc_axe_from_righthandlocator_position_0 = v.winefox_bc_axe_pose_righthandlocator_position_0;
+        v.winefox_bc_axe_from_righthandlocator_position_1 = v.winefox_bc_axe_pose_righthandlocator_position_1;
+        v.winefox_bc_axe_from_righthandlocator_position_2 = v.winefox_bc_axe_pose_righthandlocator_position_2;
+        v.winefox_bc_axe_from_righthandlocator_rotation_0 = v.winefox_bc_axe_pose_righthandlocator_rotation_0;
+        v.winefox_bc_axe_from_righthandlocator_rotation_1 = v.winefox_bc_axe_pose_righthandlocator_rotation_1;
+        v.winefox_bc_axe_from_righthandlocator_rotation_2 = v.winefox_bc_axe_pose_righthandlocator_rotation_2;
+        v.winefox_bc_axe_from_rightfutou_rotation_0 = v.winefox_bc_axe_pose_rightfutou_rotation_0;
+        v.winefox_bc_axe_from_rightfutou_rotation_1 = v.winefox_bc_axe_pose_rightfutou_rotation_1;
+        v.winefox_bc_axe_from_rightfutou_rotation_2 = v.winefox_bc_axe_pose_rightfutou_rotation_2;
+        v.winefox_bc_axe_from_upbody_position_0 = v.winefox_bc_axe_pose_upbody_position_0;
+        v.winefox_bc_axe_from_upbody_position_1 = v.winefox_bc_axe_pose_upbody_position_1;
+        v.winefox_bc_axe_from_upbody_position_2 = v.winefox_bc_axe_pose_upbody_position_2;
+        v.winefox_bc_axe_from_upbody_rotation_0 = v.winefox_bc_axe_pose_upbody_rotation_0;
+        v.winefox_bc_axe_from_upbody_rotation_1 = v.winefox_bc_axe_pose_upbody_rotation_1;
+        v.winefox_bc_axe_from_upbody_rotation_2 = v.winefox_bc_axe_pose_upbody_rotation_2;
+        v.winefox_bc_axe_from_upperbody_position_0 = v.winefox_bc_axe_pose_upperbody_position_0;
+        v.winefox_bc_axe_from_upperbody_position_1 = v.winefox_bc_axe_pose_upperbody_position_1;
+        v.winefox_bc_axe_from_upperbody_position_2 = v.winefox_bc_axe_pose_upperbody_position_2;
+        v.winefox_bc_axe_from_upperbody_rotation_0 = v.winefox_bc_axe_pose_upperbody_rotation_0;
+        v.winefox_bc_axe_from_upperbody_rotation_1 = v.winefox_bc_axe_pose_upperbody_rotation_1;
+        v.winefox_bc_axe_from_upperbody_rotation_2 = v.winefox_bc_axe_pose_upperbody_rotation_2;
+    };
+    // END GENERATED AXE POSE SNAPSHOT
+    v.winefox_bc_start = t.now;
+    v.winefox_bc_speed = math.clamp(ysm.attack_speed, 0.1, 20);
+    (t.action >= 4) ? {
+        v.winefox_bc_axe_cooldown_ticks = math.max(2, 20 / v.winefox_bc_speed);
+        v.winefox_bc_axe_cooldown_seconds = v.winefox_bc_axe_cooldown_ticks / 20;
+        v.winefox_bc_axe_hit_delay = math.max(1, math.round(v.winefox_bc_axe_cooldown_ticks * 0.15)) / 20;
+        v.winefox_bc_axe_path_start = v.winefox_bc_axe_path;
+        (t.axe_continue == 0) ? {
+            v.winefox_bc_axe_path_start = 0;
+            (t.action == 5 || t.action == 7) ? { v.winefox_bc_axe_path_start = 2; };
+        };
+        v.winefox_bc_axe_path = v.winefox_bc_axe_path_start;
+        v.winefox_bc_axe_path_target = math.floor(v.winefox_bc_axe_path_start / 2) * 2 + 1;
+        t.target_mod = v.winefox_bc_axe_path_target - math.floor(v.winefox_bc_axe_path_target / 4) * 4;
+        (t.action == 4 || t.action == 6) ? {
+            (t.target_mod != 1) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 2; };
+        } : {
+            (t.target_mod != 3) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 2; };
+        };
+        v.winefox_bc_axe_stage = 1;
+        v.winefox_bc_axe_grip_at = t.now + v.winefox_bc_axe_hit_delay * 0.45;
+        t.axe_continue ? {
+            v.winefox_bc_axe_stage = 2;
+            v.winefox_bc_axe_grip_at = t.now;
+        };
+        v.winefox_bc_axe_hit_at = t.now + v.winefox_bc_axe_hit_delay;
+        v.winefox_bc_axe_blend = 1;
+        v.winefox_bc_axe_capture ? { v.winefox_bc_axe_blend = 0; };
+        (v.winefox_bc_axe_stage == 1) ? { v.winefox_bc_phase = 0; };
+    };
+    v.winefox_bc_action = t.action;
+};
+// A missing input may be a gap between combo attacks. Never reset to idle here.
+t.empty = ctrl.bcombat_attack_animation == '' || ctrl.bcombat_attack_animation == '""';
+(t.action == 0 && v.winefox_bc_input > 0) ? {
+    (v.winefox_bc_action >= 4) ? {
+        v.winefox_bc_recover_at = math.max(t.now + 0.16, math.max(v.winefox_bc_start + v.winefox_bc_axe_cooldown_seconds + 0.12, v.winefox_bc_axe_hit_at + 1.25));
+    } : {
+        v.winefox_bc_recover_at = math.max(t.now + 0.12, v.winefox_bc_start + 0.5 / v.winefox_bc_speed + (v.winefox_bc_action == 3 ? 0.1 : 0.5833));
+    };
+};
+t.elapsed = math.max(0, t.now - v.winefox_bc_start);
+t.hit_age = t.elapsed - 0.5 / math.max(0.1, v.winefox_bc_speed);
+(v.winefox_bc_action >= 4) ? {
+    (v.winefox_bc_axe_stage == 1) ? {
+        t.catch = math.max(0.0001, v.winefox_bc_axe_grip_at - v.winefox_bc_start);
+        v.winefox_bc_axe_blend = 1;
+        v.winefox_bc_axe_capture ? { v.winefox_bc_axe_blend = math.clamp(t.elapsed / t.catch, 0, 1); };
+        v.winefox_bc_axe_blend = v.winefox_bc_axe_blend * v.winefox_bc_axe_blend * (3 - 2 * v.winefox_bc_axe_blend);
+        v.winefox_bc_phase = 0.2 * math.clamp(t.elapsed / t.catch, 0, 1);
+        (t.now >= v.winefox_bc_axe_grip_at) ? { v.winefox_bc_axe_stage = 2; v.winefox_bc_axe_blend = 1; };
+    };
+    (v.winefox_bc_axe_stage == 2) ? {
+        (t.now < v.winefox_bc_axe_hit_at) ? {
+            t.u = math.clamp((t.now - v.winefox_bc_axe_grip_at) / math.max(0.0001, v.winefox_bc_axe_hit_at - v.winefox_bc_axe_grip_at), 0, 1);
+            v.winefox_bc_axe_path = v.winefox_bc_axe_path_start + (v.winefox_bc_axe_path_target - v.winefox_bc_axe_path_start) * t.u * t.u * (2 - t.u);
+            v.winefox_bc_phase = 0.2 + 0.3 * t.u;
+        } : {
+            // Tail has its own seconds: follow-through, low pause, same-side lift.
+            // Reaching the raised pose never triggers another cut.
+            t.tail_age = math.max(0, t.now - v.winefox_bc_axe_hit_at);
+            (t.tail_age < 0.12) ? {
+                t.follow = math.clamp(t.tail_age / 0.12, 0, 1);
+                v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.18 * (1 - (1 - t.follow) * (1 - t.follow));
+            } : {
+                v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.18;
+                (t.tail_age > 0.4) ? {
+                    v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.4 + 0.6 * math.clamp((t.tail_age - 0.4) / 0.6, 0, 1);
+                };
+            };
+            v.winefox_bc_phase = 0.58;
+
+        };
+    };
+    (t.action == 0 && t.empty && v.winefox_bc_axe_stage == 2 && t.now >= v.winefox_bc_recover_at) ? {
+        v.winefox_bc_axe_stage = 3;
+        v.winefox_bc_axe_recovery_start = t.now;
+        v.winefox_bc_phase = 0.675;
+    };
+    (v.winefox_bc_axe_stage == 3) ? {
+        t.release_age = math.max(0, t.now - v.winefox_bc_axe_recovery_start);
+        (t.release_age < 0.2) ? {
+            v.winefox_bc_phase = 0.675 + 0.125 * t.release_age / 0.2;
+        } : {
+            v.winefox_bc_phase = 0.8 + 0.2 * math.clamp((t.release_age - 0.2) / 0.65, 0, 1);
+        };
+    };
+    v.winefox_bc_axe_core_phase = (v.winefox_bc_axe_path - math.floor(v.winefox_bc_axe_path / 4) * 4) * 0.25;
+} : {
+    t.recovery = (t.action == 0 && t.sword && t.empty) ? math.max(0, t.now - v.winefox_bc_recover_at) : 0;
+    // Combo windup skips the extra idle key and blends from the last displayed pose.
+    t.from = v.winefox_bc_combo ? 0.2083 : 0;
+    v.winefox_bc_blend = v.winefox_bc_combo ? math.clamp(t.elapsed / math.min(0.12, 0.2 / v.winefox_bc_speed), 0, 1) : 1;
+    v.winefox_bc_blend = v.winefox_bc_blend * v.winefox_bc_blend * (3 - 2 * v.winefox_bc_blend);
+    (t.hit_age < 0) ? {
+        v.winefox_bc_phase = t.from + (0.5 - t.from) * math.clamp(t.elapsed * v.winefox_bc_speed * 2, 0, 1);
+    } : {
+        (v.winefox_bc_action == 3) ? {
+            v.winefox_bc_phase = math.min(1, 0.5 + math.min(0.1, t.hit_age) + t.recovery * 0.4 / 0.55);
+        } : {
+            // Original slash: hit .1667, hold .25-.75, recover 1/1.4167/1.5.
+            t.tail = t.recovery > 0 ? 0.75 + t.recovery : math.min(0.75, 0.1667 + t.hit_age);
+            v.winefox_bc_phase = t.tail < 0.25 ? 0.5 + (t.tail - 0.1667) * 0.0833 / 0.0833 : (t.tail < 0.75 ? 0.5833 + (t.tail - 0.25) * 0.0834 / 0.5 : (t.tail < 1 ? 0.6667 + (t.tail - 0.75) * 0.125 / 0.25 : (t.tail < 1.4167 ? 0.7917 + (t.tail - 1) * 0.125 / 0.4167 : math.min(1, 0.9167 + (t.tail - 1.4167) * 0.0833 / 0.0833))));
+        };
+    };
+};
+// Only an empty input can finish the single-hit recovery. Unknown attacks cancel.
+t.display_match = (v.winefox_bc_action <= 3 && t.sword) || (v.winefox_bc_action >= 4 && v.winefox_bc_action <= 5 && t.model_axe) || (v.winefox_bc_action >= 6 && t.axe && t.model_axe == 0);
+t.keep = t.display_match && ysm.swinging_arm == 0 && t.empty && v.winefox_bc_phase < 1;
+v.winefox_bc_input = t.action;
+(t.action == 0 && t.keep) ? { t.action = v.winefox_bc_action; };
+v.winefox_bc_action = t.action;
+(v.winefox_bc_action == 0) ? { v.winefox_bc_phase = 0; v.winefox_bc_axe_stage = 0; };
+v.winefox_bc_last_swing = ysm.swing_time;

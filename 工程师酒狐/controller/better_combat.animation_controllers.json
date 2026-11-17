@@ -1,0 +1,239 @@
+{
+	"format_version": "1.19.0",
+	"animation_controllers": {
+		"player.swing": {
+			"initial_state": "ysm-builtin",
+			"states": {
+				"ysm-builtin": {
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						}
+					],
+					"blend_transition": 0.04
+				},
+				"right": {
+					"transitions": [
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					],
+					"blend_transition": 0.04,
+					"animations": [
+						"winefox_bc_right"
+					]
+				},
+				"left": {
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					],
+					"blend_transition": 0.04,
+					"animations": [
+						"winefox_bc_left"
+					]
+				},
+				"stab": {
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					],
+					"blend_transition": 0.04,
+					"animations": [
+						"winefox_bc_stab"
+					]
+				},
+				"axe_right": {
+					"blend_transition": 0,
+					"animations": [
+						"winefox_bc_axe_right"
+					],
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					]
+				},
+				"axe_left": {
+					"blend_transition": 0,
+					"animations": [
+						"winefox_bc_axe_left"
+					],
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					]
+				},
+				"axe_item_right": {
+					"blend_transition": 0,
+					"animations": [
+						"winefox_bc_axe_right_item"
+					],
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_left": "v.winefox_bc_action == 7"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					]
+				},
+				"axe_item_left": {
+					"blend_transition": 0,
+					"animations": [
+						"winefox_bc_axe_left_item"
+					],
+					"transitions": [
+						{
+							"right": "v.winefox_bc_action == 1"
+						},
+						{
+							"left": "v.winefox_bc_action == 2"
+						},
+						{
+							"stab": "v.winefox_bc_action == 3"
+						},
+						{
+							"axe_right": "v.winefox_bc_action == 4"
+						},
+						{
+							"axe_left": "v.winefox_bc_action == 5"
+						},
+						{
+							"axe_item_right": "v.winefox_bc_action == 6"
+						},
+						{
+							"ysm-builtin": "v.winefox_bc_action == 0"
+						}
+					]
+				}
+			}
+		}
+	}
+}
