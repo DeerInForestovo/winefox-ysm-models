@@ -22,12 +22,13 @@ def number(value):
     return format(value, ".10f").rstrip("0").rstrip(".") or "0"
 
 
-def curve(frames, axis, phase='v.winefox_bc_phase'):
+def curve(frames, axis, phase='v.winefox_bc_phase', balanced=False):
     if not isinstance(frames, dict):
         return vector(frames)[axis]
     keys = sorted(frames, key=float)
     points = [(float(t), vector(frames[t])[axis]) for t in keys]
     expression = number(points[-1][1])
+    segments = [None] * (len(points) - 1) + [expression]
     for i in reversed(range(len(points) - 1)):
         a, start = points[i]
         b, end = points[i + 1]
@@ -44,7 +45,15 @@ def curve(frames, axis, phase='v.winefox_bc_phase'):
             if cubic:
                 args += [left, right]
             segment = f'fn.winefox_bc_lerp({phase}, ' + ', '.join(map(number, args)) + ')'
+        segments[i] = segment
         expression = f'{phase} < {number(b)} ? ({segment}) : ({expression})'
+    if balanced:
+        def select(lo, hi):
+            if hi - lo == 1:
+                return segments[lo]
+            mid = (lo + hi) // 2
+            return f'{phase} < {number(points[mid][0])} ? ({select(lo, mid)}) : ({select(mid, hi)})'
+        return select(0, len(points))
     return expression
 
 
@@ -95,12 +104,12 @@ def compile_clips():
         clip['loop'] = True
         for bone, channels in clip['bones'].items():
             for channel, frames in channels.items():
-                values = [curve(frames, axis) for axis in range(3)]
+                values = [curve(frames, axis, balanced=True) for axis in range(3)]
                 if channel in ('rotation', 'position'):
                     core_frames = core['bones'][bone][channel]
                     for axis, full_value in enumerate(values):
                         key = f'{bone}_{channel}_{axis}'.lower()
-                        core_value = curve(core_frames, axis, 'v.winefox_bc_axe_core_phase')
+                        core_value = curve(core_frames, axis, 'v.winefox_bc_axe_core_phase', balanced=True)
                         values[axis] = (
                             f'v.winefox_bc_axe_pose_{key} = v.winefox_bc_axe_stage == 2 ? ({core_value}) : '
                             f'(v.winefox_bc_axe_stage == 1 ? v.winefox_bc_axe_from_{key} + '

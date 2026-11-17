@@ -116,7 +116,7 @@ test('single axe hit holds, releases left first, then returns both arms',()=>{
   assert.ok(Math.abs(releaseStart['LeftArm/rotation'][0]-releasing['LeftArm/rotation'][0])>.01);
   f.s.now=recoverAt+.3;f.update(false);const returning=render(f);
   assert.ok(Math.abs(returning['RightArm/rotation'][0]-releaseStart['RightArm/rotation'][0])>.01);
-  f.s.now=recoverAt+.76;f.update(false);assert.equal(f.update(false),'ysm-builtin');
+  f.s.now=recoverAt+.86;f.update(false);assert.equal(f.update(false),'ysm-builtin');
 });
 
 test('gripped axe combos retime shared path without idle, release or pose blending',()=>{
@@ -133,7 +133,7 @@ test('gripped axe combos retime shared path without idle, release or pose blendi
     f.update(false);assert.equal(value(f,'v.winefox_bc_axe_path'),path);
     f.s.now=value(f,'v.winefox_bc_axe_hit_at');f.update(false);
     const target=value(f,'v.winefox_bc_axe_path_target');
-    assert.equal(target%2,(next===4)?1:0);
+    assert.equal(target%4,(next===4)?1:3);
     assert.equal(value(f,'v.winefox_bc_axe_path'),target);
   }
 });
@@ -153,8 +153,8 @@ test('axe display channels select exactly one weapon and never rotate its handle
   for(const action of [4,5,6,7]) {
     const f=fixture();f.vm.execute(`v.winefox_bc_action=${action};v.winefox_bc_axe_stage=2;`);
     const clip=clips[actionClips[action]],item=action>=6;
-    assert.deepEqual(clip.bones.RightHandLocator.scale,Array(3).fill(item?1:0));
-    assert.deepEqual(clip.bones.Rightfutou.scale,Array(3).fill(item?0:1));
+    assert.deepEqual(clip.bones.RightHandLocator.scale,[0,0,0]);
+    assert.deepEqual(clip.bones.Rightfutou.scale,[1,1,1]);
     assert.deepEqual(clip.bones.Rightjiantihuan.scale,[0,0,0]);
     assert.ok(clip.bones.Rightfutou.rotation.every(v=>f.vm.execute(v)===0));
   }
@@ -199,14 +199,14 @@ function fk(pose) {
   return worlds;
 }
 function corePose(f,action,q) {
-  f.vm.execute(`v.winefox_bc_action=${action};v.winefox_bc_axe_stage=2;v.winefox_bc_axe_core_phase=${(q%2)/2};`);
+  f.vm.execute(`v.winefox_bc_action=${action};v.winefox_bc_axe_stage=2;v.winefox_bc_axe_core_phase=${(q%4)/4};`);
   return render(f);
 }
 test('generated runtime curves keep the left fist on the second grip between keys',t=>{
   const f=fixture(),leftOffset=[-3.525-(-3.35325),16.275-23.58739,.05-(-.05)];
   let max=0,sum=0,count=0,minElbow=180,maxPalmStep=0,previousNormal=null;
   for(let i=0;i<=720;i++) {
-    const q=2*(i+.37)/721,worlds=fk(corePose(f,4,q));
+    const q=4*(i+.37)/721,worlds=fk(corePose(f,4,q));
     const grip=point(worlds.get('Rightfutou'),config.grip.left_grip_local_blockbench);
     const fist=point(worlds.get('LeftForeArm'),leftOffset),error=distance(grip,fist);
     max=Math.max(max,error);sum+=error;count++;
@@ -221,7 +221,7 @@ test('generated runtime curves keep the left fist on the second grip between key
     assert.ok(distance(rightGrip,rightHand)<1e-6);
   }
   for(const action of [5,6,7])for(let i=0;i<80;i++) {
-    const q=2*(i+.41)/80,worlds=fk(corePose(f,action,q));
+    const q=4*(i+.41)/80,worlds=fk(corePose(f,action,q));
     const error=distance(point(worlds.get('Rightfutou'),config.grip.left_grip_local_blockbench),point(worlds.get('LeftForeArm'),leftOffset));
     max=Math.max(max,error);sum+=error;count++;
   }
@@ -229,4 +229,40 @@ test('generated runtime curves keep the left fist on the second grip between key
   assert.ok(max<=config.grip.max_position_error_model_units,`grip error ${max}`);
   assert.ok(minElbow>12,`elbow approached a singular straight pose: ${minElbow}`);
   assert.ok(maxPalmStep<12,`left palm flipped between samples: ${maxPalmStep}`);
+});
+
+
+test('axe tail pauses low, lifts on the same side, and waits without another cut',()=>{
+  for(const action of [4,5,6,7]){
+    const f=fixture();attack(f,action);
+    const hit=value(f,'v.winefox_bc_axe_hit_at'), target=value(f,'v.winefox_bc_axe_path_target');
+    f.s.now=hit+.12;f.s.tick=2;f.update(false);const low=render(f);
+    assert.ok(Math.abs(value(f,'v.winefox_bc_axe_path')-target-.18)<1e-6);
+    f.s.now=hit+.39;f.update(false);assertPoseNear(low,render(f));
+    f.s.now=hit+.7;f.update(false);const rising=value(f,'v.winefox_bc_axe_path');
+    assert.ok(rising>target+.4&&rising<target+1);
+    f.s.now=hit+1;f.update(false);
+    assert.ok(Math.abs(value(f,'v.winefox_bc_axe_path')-target-1)<1e-6);
+    const raised=render(f);
+    f.s.now=hit+5;f.update(false);assertPoseNear(raised,render(f));
+    assert.equal(value(f,'v.winefox_bc_axe_stage'),2);
+  }
+});
+
+test('runtime axe edge follows the head during both cuts and keeps its direction through low hold',()=>{
+  const f=fixture();
+  for(const [start,side] of [[0,1],[2,-1]]){
+    let previous=null,minDot=1;
+    for(let i=0;i<=250;i++){
+      const q=start+1.18*i/250,world=fk(corePose(f,4,q)).get('Rightfutou');
+      const head=point(world,[-.45,-3.275,-9.55]),edge=[-world[0][1],-world[1][1],-world[2][1]];
+      assert.ok(-side*edge[0]>0,'blade faces the incoming side');
+      if(previous){
+        const velocity=head.map((v,k)=>v-previous[k]),length=Math.hypot(...velocity);
+        if(length>.0001)minDot=Math.min(minDot,edge.reduce((sum,v,k)=>sum+v*velocity[k],0)/length);
+      }
+      previous=head;
+    }
+    assert.ok(minDot>.7,'edge opposes actual head velocity: '+minDot);
+  }
 });

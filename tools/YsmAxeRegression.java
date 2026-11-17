@@ -64,6 +64,18 @@ public final class YsmAxeRegression {
     private static int route(String script,String name,boolean axe,boolean model,int arm)throws Exception{
         var f=new Fixture(script,name,axe,model,arm,1f);f.run();return (int)f.value("winefox_bc_action");
     }
+    @SuppressWarnings("unchecked") private static float authored(Object frames,int axis,float phase){
+        if(frames instanceof List<?> values)return ((Number)values.get(axis)).floatValue();
+        var points=new TreeMap<Double,Object>();
+        ((Map<String,Object>)frames).forEach((time,value)->points.put(Double.valueOf(time),value));
+        var lo=points.floorEntry((double)phase);var hi=points.ceilingEntry((double)phase);
+        if(lo==null)lo=points.firstEntry();if(hi==null)hi=points.lastEntry();
+        Object a=lo.getValue(),b=hi.getValue();
+        if(a instanceof Map<?,?> m)a=m.get("post");if(b instanceof Map<?,?> m)b=m.get("post");
+        double x=((Number)((List<?>)a).get(axis)).doubleValue(),y=((Number)((List<?>)b).get(axis)).doubleValue();
+        double u=hi.getKey().equals(lo.getKey())?0:(phase-lo.getKey())/(hi.getKey()-lo.getKey());
+        return (float)(x+(y-x)*u);
+    }
     @SuppressWarnings("unchecked") private static void animationChannels(String script,String animationPath)throws Exception{
         var f=new Fixture(script,RIGHT,true,true,0,1f);f.run();
         Map<String,Object> root=new Gson().fromJson(Files.readString(Path.of(animationPath)),Map.class);
@@ -76,6 +88,41 @@ public final class YsmAxeRegression {
         f.scoped.put("winefox_bc_axe_stage",1f);f.scoped.put("winefox_bc_phase",0f);f.scoped.put("winefox_bc_axe_blend",.25f);
         near(f.channel(expression),27.75f,.00001f,"Ungripped display-pose blend failed in native channel mode");
         near(f.value("winefox_bc_axe_pose_rightfutou_rotation_0"),27.75f,.00001f,"Ungripped pose cache failed in native channel mode");
+        Path authorPath=Path.of(animationPath).getParent().getParent().getParent().resolve("authoring/better_combat_axe.keyframes.json");
+        var authorRoot=(Map<String,Object>)new Gson().fromJson(Files.readString(authorPath),Map.class).get("animations");
+        var coreBones=(Map<String,Object>)((Map<String,Object>)authorRoot.get("winefox_bc_axe_core")).get("bones");
+        var singleBones=(Map<String,Object>)((Map<String,Object>)authorRoot.get("winefox_bc_axe_right")).get("bones");
+        var pattern=java.util.regex.Pattern.compile("fn\\.winefox_bc_lerp\\(([^()]*)\\)");
+        for(String boneName:List.of("RightArm","LeftForeArm","UpperBody")){
+            var channels=(Map<String,Object>)bones.get(boneName);
+            int axis=-1;
+            for(Object raw:(List<Object>)channels.get("rotation")){
+                axis++;
+                String source=raw.toString();
+                var matcher=pattern.matcher(source);var expanded=new StringBuffer();
+                while(matcher.find()){
+                    String[] a=matcher.group(1).split(",\\s*");
+                    require(a.length==6&&Float.parseFloat(a[5])==1f,"Expected a baked linear axe segment");
+                    // Helper arguments are phase, begin, end, start, finish, linear.
+                    String inline="("+a[3]+"+("+a[4]+"-"+a[3]+")*math.clamp(("+a[0]+"-"+a[1]+")/("+a[2]+"-"+a[1]+"),0,1))";
+                    matcher.appendReplacement(expanded,java.util.regex.Matcher.quoteReplacement(inline));
+                }
+                matcher.appendTail(expanded);
+                var parsedChannel=f.parse.invoke(f.parser,expanded.toString(),false);
+                f.scoped.put("winefox_bc_axe_stage",2f);
+                for(float phase:new float[]{0f,.125f,.25f,.5f,.75f,.999f}){
+                    f.scoped.put("winefox_bc_axe_core_phase",phase);
+                    float result=((Number)f.eval.invoke(parsedChannel,f.evaluator)).floatValue();
+                    near(result,authored(((Map<String,Object>)coreBones.get(boneName)).get("rotation"),axis,phase),.005f,"Native dense core curve");
+                }
+                f.scoped.put("winefox_bc_axe_stage",3f);
+                for(float phase:new float[]{.675f,.8f,.9f,1f}){
+                    f.scoped.put("winefox_bc_phase",phase);
+                    near(((Number)f.eval.invoke(parsedChannel,f.evaluator)).floatValue(),authored(((Map<String,Object>)singleBones.get(boneName)).get("rotation"),axis,phase),.005f,"Native release curve");
+                }
+            }
+        }
+
     }
     public static void main(String[] args)throws Exception{
         String script=Files.readString(Path.of(args[0]));int routes=0;
@@ -100,17 +147,23 @@ public final class YsmAxeRegression {
         near(single.value("winefox_bc_axe_hit_delay"),.15f,.000001f,"20-tick cooldown must use 3-tick windup");
         single.at(.05);float phase=single.value("winefox_bc_phase");single.run();near(single.value("winefox_bc_phase"),phase,0f,"Duplicate native evaluation advanced enter");
         single.at(.15);near(single.value("winefox_bc_axe_path"),1f,.000001f,"Axe hit path");require(single.value("winefox_bc_axe_stage")==2f,"Axe did not grip");
-        single.at(.23);near(single.value("winefox_bc_axe_path"),1.1834f,.00001f,"Axe hold path");
+        single.at(.27);near(single.value("winefox_bc_axe_path"),1.18f,.00001f,"Axe hold path");
         single.attack("");single.at(.25);require(single.value("winefox_bc_axe_stage")==2f,"Empty input released immediately");
-        single.at(1.12);require(single.value("winefox_bc_axe_stage")==3f,"Single axe did not start release");near(single.value("winefox_bc_phase"),.675f,.000001f,"Release landmark");
-        single.at(1.22);near(single.value("winefox_bc_phase"),.7375f,.000001f,"Left release must precede right return");
-        single.at(1.87);require(single.value("winefox_bc_action")==0f,"Axe recovery did not release controller");
-        var combo=new Fixture(script,RIGHT,true,true,0,1f);combo.run();combo.at(.23);float before=combo.value("winefox_bc_axe_path");
-        combo.at(.27);combo.attack(LEFT);require(combo.value("winefox_bc_axe_stage")==2f,"Combo entered idle or release");near(combo.value("winefox_bc_axe_path"),before,0f,"Combo jumped on its first frame");
-        combo.run();near(combo.value("winefox_bc_axe_path"),before,0f,"Duplicate combo evaluation changed path");combo.at(.42);near(combo.value("winefox_bc_axe_path"),2f,.000001f,"Reverse slash target");
-        var restart=new Fixture(script,RIGHT,true,true,0,1f);restart.run();restart.at(.25);restart.attack("");restart.at(.3);restart.at(1.3);
-        require(restart.value("winefox_bc_axe_stage")==3f,"Restart fixture did not enter release");restart.at(1.35);restart.attack(RIGHT);
+        single.at(1.4);require(single.value("winefox_bc_axe_stage")==3f,"Single axe did not start release");near(single.value("winefox_bc_phase"),.675f,.000001f,"Release landmark");
+        single.at(1.5);near(single.value("winefox_bc_phase"),.7375f,.000001f,"Left release must precede right return");
+        single.at(2.26);require(single.value("winefox_bc_action")==0f,"Axe recovery did not release controller");
+        var combo=new Fixture(script,RIGHT,true,true,0,1f);combo.run();combo.at(.27);float before=combo.value("winefox_bc_axe_path");
+        combo.attack(LEFT);require(combo.value("winefox_bc_axe_stage")==2f,"Combo entered idle or release");near(combo.value("winefox_bc_axe_path"),before,0f,"Combo jumped on its first frame");
+        combo.run();near(combo.value("winefox_bc_axe_path"),before,0f,"Duplicate combo evaluation changed path");combo.at(.42);near(combo.value("winefox_bc_axe_path"),3f,.000001f,"Reverse slash target");
+        var restart=new Fixture(script,RIGHT,true,true,0,1f);restart.run();restart.at(.25);restart.attack("");restart.at(.3);restart.at(1.5);
+        require(restart.value("winefox_bc_axe_stage")==3f,"Restart fixture did not enter release");restart.at(1.55);restart.attack(RIGHT);
         require(restart.value("winefox_bc_axe_stage")==1f,"Released axe did not naturally regrip");near(restart.value("winefox_bc_axe_blend"),0f,0f,"Regrip did not start at displayed pose");
+        var tail=new Fixture(script,RIGHT,true,true,0,1f);tail.run();
+        tail.at(.27);near(tail.value("winefox_bc_axe_path"),1.18f,.00001f,"Low endpoint");
+        tail.at(.54);near(tail.value("winefox_bc_axe_path"),1.18f,.00001f,"Low pause drifted");
+        tail.at(.85);near(tail.value("winefox_bc_axe_path"),1.7f,.00001f,"Same-side lift");
+        tail.at(1.15);near(tail.value("winefox_bc_axe_path"),2f,.00001f,"Raised ready pose");
+        tail.at(5);near(tail.value("winefox_bc_axe_path"),2f,.00001f,"Tail invented another cut");
         animationChannels(script,args[1]);
         System.out.println("PASS: YSM 2.6.5 native axe routing ("+routes+" cases), tick windup, single/combo/restart and animation-channel policies");
     }

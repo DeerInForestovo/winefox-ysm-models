@@ -131,14 +131,15 @@ t.restart ? {
         v.winefox_bc_axe_path_start = v.winefox_bc_axe_path;
         (t.axe_continue == 0) ? {
             v.winefox_bc_axe_path_start = 0;
-            (t.action == 5 || t.action == 7) ? { v.winefox_bc_axe_path_start = 1; };
+            (t.action == 5 || t.action == 7) ? { v.winefox_bc_axe_path_start = 2; };
         };
         v.winefox_bc_axe_path = v.winefox_bc_axe_path_start;
-        v.winefox_bc_axe_path_target = math.floor(v.winefox_bc_axe_path_start) + 1;
+        v.winefox_bc_axe_path_target = math.floor(v.winefox_bc_axe_path_start / 2) * 2 + 1;
+        t.target_mod = v.winefox_bc_axe_path_target - math.floor(v.winefox_bc_axe_path_target / 4) * 4;
         (t.action == 4 || t.action == 6) ? {
-            (v.winefox_bc_axe_path_target - math.floor(v.winefox_bc_axe_path_target / 2) * 2 == 0) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 1; };
+            (t.target_mod != 1) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 2; };
         } : {
-            (v.winefox_bc_axe_path_target - math.floor(v.winefox_bc_axe_path_target / 2) * 2 == 1) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 1; };
+            (t.target_mod != 3) ? { v.winefox_bc_axe_path_target = v.winefox_bc_axe_path_target + 2; };
         };
         v.winefox_bc_axe_stage = 1;
         v.winefox_bc_axe_grip_at = t.now + v.winefox_bc_axe_hit_delay * 0.45;
@@ -157,7 +158,7 @@ t.restart ? {
 t.empty = ctrl.bcombat_attack_animation == '' || ctrl.bcombat_attack_animation == '""';
 (t.action == 0 && v.winefox_bc_input > 0) ? {
     (v.winefox_bc_action >= 4) ? {
-        v.winefox_bc_recover_at = math.max(t.now + 0.16, v.winefox_bc_start + v.winefox_bc_axe_cooldown_seconds + 0.12);
+        v.winefox_bc_recover_at = math.max(t.now + 0.16, math.max(v.winefox_bc_start + v.winefox_bc_axe_cooldown_seconds + 0.12, v.winefox_bc_axe_hit_at + 1.25));
     } : {
         v.winefox_bc_recover_at = math.max(t.now + 0.12, v.winefox_bc_start + 0.5 / v.winefox_bc_speed + (v.winefox_bc_action == 3 ? 0.1 : 0.5833));
     };
@@ -179,9 +180,20 @@ t.hit_age = t.elapsed - 0.5 / math.max(0.1, v.winefox_bc_speed);
             v.winefox_bc_axe_path = v.winefox_bc_axe_path_start + (v.winefox_bc_axe_path_target - v.winefox_bc_axe_path_start) * t.u * t.u * (2 - t.u);
             v.winefox_bc_phase = 0.2 + 0.3 * t.u;
         } : {
-            t.follow = math.clamp((t.now - v.winefox_bc_axe_hit_at) / 0.08, 0, 1);
-            v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.1834 * (1 - (1 - t.follow) * (1 - t.follow));
-            v.winefox_bc_phase = 0.5 + math.min(0.08, t.now - v.winefox_bc_axe_hit_at);
+            // Tail has its own seconds: follow-through, low pause, same-side lift.
+            // Reaching the raised pose never triggers another cut.
+            t.tail_age = math.max(0, t.now - v.winefox_bc_axe_hit_at);
+            (t.tail_age < 0.12) ? {
+                t.follow = math.clamp(t.tail_age / 0.12, 0, 1);
+                v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.18 * (1 - (1 - t.follow) * (1 - t.follow));
+            } : {
+                v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.18;
+                (t.tail_age > 0.4) ? {
+                    v.winefox_bc_axe_path = v.winefox_bc_axe_path_target + 0.4 + 0.6 * math.clamp((t.tail_age - 0.4) / 0.6, 0, 1);
+                };
+            };
+            v.winefox_bc_phase = 0.58;
+
         };
     };
     (t.action == 0 && t.empty && v.winefox_bc_axe_stage == 2 && t.now >= v.winefox_bc_recover_at) ? {
@@ -194,10 +206,10 @@ t.hit_age = t.elapsed - 0.5 / math.max(0.1, v.winefox_bc_speed);
         (t.release_age < 0.2) ? {
             v.winefox_bc_phase = 0.675 + 0.125 * t.release_age / 0.2;
         } : {
-            v.winefox_bc_phase = 0.8 + 0.2 * math.clamp((t.release_age - 0.2) / 0.55, 0, 1);
+            v.winefox_bc_phase = 0.8 + 0.2 * math.clamp((t.release_age - 0.2) / 0.65, 0, 1);
         };
     };
-    v.winefox_bc_axe_core_phase = (v.winefox_bc_axe_path - math.floor(v.winefox_bc_axe_path / 2) * 2) * 0.5;
+    v.winefox_bc_axe_core_phase = (v.winefox_bc_axe_path - math.floor(v.winefox_bc_axe_path / 4) * 4) * 0.25;
 } : {
     t.recovery = (t.action == 0 && t.sword && t.empty) ? math.max(0, t.now - v.winefox_bc_recover_at) : 0;
     // Combo windup skips the extra idle key and blends from the last displayed pose.
