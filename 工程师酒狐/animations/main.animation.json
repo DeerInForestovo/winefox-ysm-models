@@ -1,6 +1,382 @@
 {
 	"format_version": "1.8.0",
 	"animations": {
+		"riptide": {
+			"loop": true,
+			"animation_length": 0.5,
+			"bones": {
+				"Root": {
+					"rotation": [
+						90,
+						0,
+						0
+					],
+					"position": [
+						0,
+						8,
+						21
+					]
+				},
+				"AllBody": {
+					"rotation": {
+						"0.0": [
+							0,
+							0,
+							0
+						],
+						"0.125": [
+							0,
+							-90,
+							0
+						],
+						"0.25": [
+							0,
+							-180,
+							0
+						],
+						"0.375": [
+							0,
+							-270,
+							0
+						],
+						"0.5": [
+							0,
+							-360,
+							0
+						]
+					}
+				},
+				"UpBody": {
+					"rotation": [
+						4,
+						-7,
+						2
+					]
+				},
+				"Head": {
+					"rotation": [
+						-66,
+						5,
+						-2
+					]
+				},
+				"RightArm": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -19 : -163",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -8 : -12",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -12 : -14"
+					]
+				},
+				"RightForeArm": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -34 : -9",
+						0,
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 10 : 3"
+					]
+				},
+				"RightHandLocator": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 0 : 95",
+						0,
+						0
+					]
+				},
+				"LeftArm": {
+					"rotation": [
+						9,
+						0,
+						14
+					]
+				},
+				"LeftForeArm": {
+					"rotation": [
+						-25,
+						0,
+						-8
+					]
+				},
+				"gebo1": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -60.31532 : 0",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 39.69518 : 0",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -42.65155 : 0"
+					]
+				},
+				"gebo2": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? -15 : 0",
+						0,
+						0
+					]
+				},
+				"gebo3": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 78.51309 : 0",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 4.40203 : 0",
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 120.682 : 0"
+					]
+				},
+				"Rightjixiezhua": {
+					"rotation": [
+						0,
+						0,
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 40 : 0"
+					]
+				},
+				"LeftHandLocator": {
+					"rotation": [
+						"(ctrl.hold('offhand', 'minecraft:trident') && !ctrl.hold('mainhand', 'minecraft:trident')) ? 180 : 0",
+						0,
+						0
+					]
+				},
+				"LeftLeg": {
+					"rotation": [
+						-26,
+						3,
+						5
+					]
+				},
+				"LeftLowerLeg": {
+					"rotation": [
+						42,
+						0,
+						0
+					]
+				},
+				"LeftFoot": {
+					"rotation": [
+						12,
+						0,
+						0
+					]
+				},
+				"RightLeg": {
+					"rotation": [
+						6,
+						0,
+						-3
+					]
+				},
+				"RightLowerLeg": {
+					"rotation": [
+						12,
+						0,
+						0
+					]
+				},
+				"RightFoot": {
+					"rotation": [
+						18,
+						0,
+						0
+					]
+				},
+				"Tail": {
+					"rotation": {
+						"0.0": [
+							-26,
+							0.0,
+							0
+						],
+						"0.125": [
+							-26,
+							1.0,
+							0
+						],
+						"0.25": [
+							-26,
+							0.0,
+							0
+						],
+						"0.375": [
+							-26,
+							-1.0,
+							0
+						],
+						"0.5": [
+							-26,
+							0.0,
+							0
+						]
+					}
+				},
+				"Tail2": {
+					"rotation": {
+						"0.0": [
+							-41,
+							-0.674,
+							0
+						],
+						"0.125": [
+							-41,
+							1.396,
+							0
+						],
+						"0.25": [
+							-41,
+							0.674,
+							0
+						],
+						"0.375": [
+							-41,
+							-1.396,
+							0
+						],
+						"0.5": [
+							-41,
+							-0.674,
+							0
+						]
+					}
+				},
+				"Tail3": {
+					"rotation": {
+						"0.0": [
+							-57,
+							-1.645,
+							0
+						],
+						"0.125": [
+							-57,
+							1.305,
+							0
+						],
+						"0.25": [
+							-57,
+							1.645,
+							0
+						],
+						"0.375": [
+							-57,
+							-1.305,
+							0
+						],
+						"0.5": [
+							-57,
+							-1.645,
+							0
+						]
+					}
+				},
+				"Tail4": {
+					"rotation": {
+						"0.0": [
+							30,
+							-2.586,
+							0
+						],
+						"0.125": [
+							30,
+							0.58,
+							0
+						],
+						"0.25": [
+							30,
+							2.586,
+							0
+						],
+						"0.375": [
+							30,
+							-0.58,
+							0
+						],
+						"0.5": [
+							30,
+							-2.586,
+							0
+						]
+					}
+				},
+				"Tail5": {
+					"rotation": {
+						"0.0": [
+							-107,
+							-3.116,
+							0
+						],
+						"0.125": [
+							-107,
+							-0.727,
+							0
+						],
+						"0.25": [
+							-107,
+							3.116,
+							0
+						],
+						"0.375": [
+							-107,
+							0.727,
+							0
+						],
+						"0.5": [
+							-107,
+							-3.116,
+							0
+						]
+					}
+				},
+				"Tail6": {
+					"rotation": {
+						"0.0": [
+							-30,
+							-2.918,
+							0
+						],
+						"0.125": [
+							-30,
+							-2.356,
+							0
+						],
+						"0.25": [
+							-30,
+							2.918,
+							0
+						],
+						"0.375": [
+							-30,
+							2.356,
+							0
+						],
+						"0.5": [
+							-30,
+							-2.918,
+							0
+						]
+					}
+				},
+				"Tail7": {
+					"rotation": {
+						"0.0": [
+							5,
+							-1.838,
+							0
+						],
+						"0.125": [
+							5,
+							-3.888,
+							0
+						],
+						"0.25": [
+							5,
+							1.838,
+							0
+						],
+						"0.375": [
+							5,
+							3.888,
+							0
+						],
+						"0.5": [
+							5,
+							-1.838,
+							0
+						]
+					}
+				}
+			}
+		},
 		"hold_mainhand$minecraft:lantern2": {
 			"loop": "hold_on_last_frame",
 			"animation_length": 0.96,
